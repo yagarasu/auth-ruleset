@@ -10,4 +10,31 @@ That's when the authorization rulesets come in handy. We separate the rules from
 The main goal of this project is to make easy the implementation of complex permission systems for the developers of any kind of apps.
 
 ## How does it work
+There are two main elements involved in this schema: the ruleset and the query. The ruleset defines entities, permissions and conditions; the queries return an allow or deny recomendation.
 
+### Authorization Ruleset
+This is the set of rules the system uses as a base. It defines entities and rules. Entities are structures, a definition of how to interpret data in the context of the application. Rules define who can do what to what given a specific context.
+
+#### Entities
+To define an entity, we use `entity`.
+
+```
+entity User
+  tag by roles primarily,
+  group by category as category;
+```
+
+This construction will create an entity called User, and it will have two groups assigned: roles and category. This means that whatever you pass as an argument in a query using this entity must contain those variables or an exception will be thrown.
+
+#### Rules
+Rules use the entities, permits and conditionals to define the recomendations. Rules are defined with this syntax:
+
+```
+$user:User {
+  can <post:edit> $post:Post {
+    if ($user.uid === $post.uid)
+  } 
+}
+```
+
+This construct will create a rule where a user can edit his own posts (if the post's id is the same as the user's is).
