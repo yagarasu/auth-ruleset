@@ -19,12 +19,25 @@ This is the set of rules the system uses as a base. It defines entities and rule
 To define an entity, we use `entity`.
 
 ```
-entity User
-  tag by roles primarily,
-  group by category as category;
+entity IDENTIFIER
+  (tag | group) by VARIABLE (primarily | as IDENTIFIER) [, more groups...]
 ```
 
-This construction will create an entity called User, and it will have two groups assigned: roles and category. This means that whatever you pass as an argument in a query using this entity must contain those variables or an exception will be thrown.
+The difference between **tag** and **group** is the relationship between elements.
+
+A **tag** is a **many to many** relationship. For example, you can have an entity User tagged by role. The user can have multiple roles.
+
+A **group** is a **one to many relationship**. For example, you can have an entity User categorized by area. The user can only have one area assigned.
+
+The `primarily` keyword can only be used once for each entity definition, always being the first group defined.
+
+```
+entity User
+  tag by roles primarily,
+  group by area as area;
+```
+
+This construction will create an entity called User, and it will have two groups assigned: roles and area. This means that whatever you pass as an argument in a query using this entity must contain those variables or an exception will be thrown.
 
 #### Rules
 Rules use the entities, permits and conditionals to define the recomendations. Rules are defined with this syntax:
