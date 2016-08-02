@@ -16,7 +16,7 @@ There are two main elements involved in this schema: the ruleset and the query. 
 This is the set of rules the system uses as a base. It defines entities and rules. Entities are structures, a definition of how to interpret data in the context of the application. Rules define who can do what to what given a specific context.
 
 #### Entities
-To define an entity, we use `entity`.
+To define an *entity*, we use `entity`.
 
 ```
 entity IDENTIFIER
@@ -40,14 +40,36 @@ entity User
 This construction will create an entity called User, and it will have two groups assigned: roles and area. This means that whatever you pass as an argument in a query using this entity must contain those variables or an exception will be thrown.
 
 #### Rules
-Rules use the entities, permits and conditionals to define the recomendations. Rules are defined with this syntax:
+Usually, an action is described as a subject doing something, maybe to an object. An authorization takes into accoint this different parts: the *subject* (being the active element of the action), the *verb* (the action itself) and maybe an *object* (or *objects*, depending on the *verb*).
+
+Rules use *entities*, *verbs* and *conditionals* to describe different scenarios given different kinds of *subjects*, *verbs* and *objects*.
+
+Let's see an example:
 
 ```
-$user:User {
+$user:User["BASIC"][area: "Marketing"] {
   can <post:edit> $post:Post {
     if ($user.uid === $post.uid)
   } 
 }
 ```
 
-This construct will create a rule where a user can edit his own posts (if the post's id is the same as the user's is).
+This construct will create a rule where a user with the role BASIC and part of the Marketing area (the *subject*) can edit (the *verb*) his own posts (the *object*), described as the post's uid being the same as the user's uid.
+
+This first part is called the *subject selector*. The first element is setting a variable called `$user` to hold the data for the *subject* in a subsequent query. This is usefull if we want to access the subject's properties in the body of the rule. After the column `:`, it assigns a previously defined entity `User` to the *subject*. Then, it has the group filter. It accepts a list of values. The *subject* used in the query is tested against this filtering system to pick which rules apply to him. In this case, it's filtering the primary group and the `area` group for `User`: "it contains the role 'BASIC' and it's assigned to the area 'Marketing'".
+
+The next part, between the first set of brackets, is the *permission list*. It contains a set of *permissions* starting with `can` or `can not` followed by a *verb*. The first part defines if the given *verb* will return an *allow* or *deny* recomendation if the rule applies. Please note that this rules are applied in cascade and we might override previous permissions if not used carefully. Here we are setting the *verb* `<post:edit>` as an allow.
+
+It's important to note that this column `:` separator is used to allow wildcards in *verbs*. Eg: `<post:*>` will be aplied for `<post:edit>` and `<post:create>`.
+
+The next part is the *object*. We set a variable `$post` and assign the entity `Post` to it. It also accepts group filtering so we can be more granular with different kinds of *objects*. We can have multiple arguments for each rule. If a required *object* is not passed as an argument in the query, it will throw an error.
+
+The last part is the conditional list. This is a list of statements that will be resolved when querying the rule as a more granular way to filter rules. It starts with `if` or `if not`, then an expression that evaluates to truthy or falsey. Chains of ifs can be created with boolean operators (and some syntactic aliases like `but`):
+
+```
+if ($foo.bar === $bar || $foo.bar === '10')
+and if (($foo.fu + 20) < 50)
+but not if ($foo.biz has 'fii')
+```
+
+
