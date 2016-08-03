@@ -7,7 +7,7 @@ Handling permissions is hard. The more complex an application is, the harder is 
 
 That's when the authorization rulesets come in handy. We separate the rules from the logic and we query that ruleset as the authority to allow or deny certain action.
 
-The main goal of this project is to make easy the implementation of complex permission systems for the developers of any kind of apps.
+The main goal of this project is to make easy the implementation of complex permission systems for the developers of any kind of apps by using language constructs close to english to resemble what we usually use to express authorizations in the real world.
 
 ## How does it work
 There are two main elements involved in this schema: the ruleset and the query. The ruleset defines entities, permissions and conditions; the queries return an allow or deny recomendation.
@@ -50,7 +50,7 @@ Let's see an example:
 $user:User["BASIC"][area: "Marketing"] {
   can <post:edit> $post:Post {
     if ($user.uid === $post.uid)
-  } 
+  }
 }
 ```
 
@@ -72,4 +72,40 @@ and if (($foo.fu + 20) < 50)
 but not if ($foo.biz has 'fii')
 ```
 
+### Authorization Queries
+It's a statement holding a *subject*, a *verb* and optional *objects* in an optional *context* that will be tested against the *ruleset*.
 
+The syntax of a query is:
+
+```
+can { ... json object for subject }:ENTITY <VERB> [{ ... json object for object}, ...more objects] [in the context of { ... json object for context}]
+```
+
+If the entity defines groups, the json object MUST contain the specified variables or an error will be thrown.
+
+Example:
+
+```
+can
+{
+  "uid": 1,
+  "username": "foo@bar.com",
+  "roles": ["BASIC", "AUTHORIZED"],
+  "area": "Marketing"
+}:User
+<post:edit>
+{
+  "pid": 1,
+  "uid": 1,
+  "title": "Lorem ipsum",
+  "content": "Dolor sit amet..."
+}:Post
+in the context of {
+  "env": "development",
+  "security": "low"
+}
+```
+
+The ruleset will be filtered down to the rules that apply to the given query, then it will resolve the different conditions and emmit a recomendation: either allow or deny.
+
+**Note to dev:** can we provide the exact reason? Eg: `{"recomendation": "deny", "reasons": ["User does not own the post", "Post is locked by Admin"]}` Can we set this strings in the ruleset?
